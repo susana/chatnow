@@ -1,34 +1,79 @@
-var socket = io();
-      
-socket.on('chat message', function(msg){
-  $('#messages').append($('<li>').text(msg));
-});
+var name;
 
-$.ajax({
-  type: 'GET',
-  url: 'messages',
-  success: function(data) {
-    data.data.messages.forEach(function(e, i) {
-      $('#messages').append($('<li>').text(e));
+$(document).ready(function() {
+  var socket = io();
+
+  // User
+
+  // Enter
+
+  $('#submit-username').on('click', function() {
+    $.ajax({
+      type: 'POST',
+      url: 'users',
+      data: {'username': $('#username').text()},
+      success: function(data) {
+        name = data.data.username;
+        $('#modal-username').addClass('display-none');
+      },
+      error: function() {
+
+      }
     });
-  },
-  error: function() {
-    
-  }
-});
+  });
 
-$('#send').on('click', function() {
+  // Leave
+
+  $(window).on('unload', function() {
+    $.ajax({
+      type: 'DELETE',
+      url: 'users/' + name,
+      success: function () {
+        socket.emit('chat message', {}); 
+      },
+      error: function() {
+
+      }
+    });
+
+  });
+
+  // Messaging
+
+  socket.on('chat message all', function(data){
+    $('#messages').append($('<li>').text(data.username + ": " + data.message));
+  });
+ 
+  $('#send').on('click', function() {
+    $.ajax({
+      type: 'POST',
+      url: 'messages',
+      data: {username: name, message: $('#message').text()},
+      success: function(data) {
+        socket.emit('chat message', data.data);
+        $('#message').text('');
+      },
+      error: function() {
+
+      }
+    });
+  });
+
+  // Init
+
   $.ajax({
-    type: 'POST',
+    type: 'GET',
     url: 'messages',
-    data: {message: $('#message').text()},
     success: function(data) {
-      socket.emit('chat message', data.data.message);
-      $('#message').text('');
+      data.data.messages.forEach(function(e, i) {
+        var d = JSON.parse(e);
+        $('#messages').append($('<li>').text(d.username + ": " + d.message));
+      });
     },
     error: function() {
-
+      
     }
   });
-});
 
+
+});

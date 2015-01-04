@@ -17,6 +17,10 @@ var VIEWS_ROOT = path.join(__dirname, 'views');
 
 // Initialize
 var app = express(); // create an app using express js
+app.use(bodyParser.urlencoded({
+  extended: true
+})); // use body-parser middleware to parse request body
+app.use(express.static('public')); // declare 'public' dir as the dir that will serve up static files
 var server = http.createServer(app); // create the web server
 var io = socketio(server);
 var redisClient = redis.createClient(REDIS_PORT); //create a redis client
@@ -39,58 +43,63 @@ function buildErrorRes(code, message) {
   return {error: {code: code, message: message}};
 }
 
-io.on('connection', function(socket ){
+io.on('connection', function(socket){
   console.log('a user connected');
-  socket.on('chat message', function(msg){
-    io.emit('chat message', msg);
+  socket.on('chat message', function(data) {
+    io.emit('chat message all', data);
+  });
+
+  socket.on('disconnect', function () {
+    io.sockets.emit('user disconnected');
+    console.log('a user disconnected');
   });
 });
 
 
-app.use(bodyParser.urlencoded({
-  extended: true
-})); // use body-parser middleware to parse request body
-app.use(express.static('public')); // declare 'public' dir as the dir that will serve up static files
-
-// API Routes
+// Views
 
 app.get('/', function(req, res){
   res.sendFile('index.html', {root : VIEWS_ROOT});
-  console.log(req.param('stuff'));
 });
+
+// API
 
 // POST - /users - create a new user
 app.post('/users', function (req, res) {
   var username = req.body.username;
-  var users = redisClient.smembers(REDIS_USERS);
-
-  if (users.indexOf(username === -1)) {
-    //users.push(username);
-    redisClient.sadd(REDIS_USERS, username);
-    res.send(buildSuccessRes({username: username}));
-  } else {
-    res.send(buildErrorRes(errors[0][code], errors[0][message]));
-  }
+  
+  redisClient.smembers(REDIS_USERS, function(error, results) {
+    if (results.indexOf(username) === -1) {
+      redisClient.sadd(REDIS_USERS, username);
+      res.send(buildSuccessRes({username: username}));
+    } else {
+      res.send(buildErrorRes(errors[0]['code'], errors[0]['message']));
+    }
+  });
 });
 
 // GET - /users - get all existing users
 app.get('/users', function(req, res) {
-  res.send(buildSucessRes({users: redisClient.smembers(REDIS_USERS)}));
+  redisClient.smembers(REDIS_USERS, function(err, results) {
+    res.send(buildSuccessRes({users: results}));
+  });
 });
 
 // DELETE - /users/username
 app.delete('/users/:username', function (req, res) {
   var username = req.params.username;
-  //users.splice(users.indexOf(username), 1); 
-  redisClient.srem(username);
+  redisClient.srem(REDIS_USERS, username);
 });
 
 // POST - /messages - create a new message
 app.post('/messages', function (req, res) {
-  //var username = req.body.username;
+  var username = req.body.username;
   var message = req.body.message;
-  redisClient.lpush(REDIS_MESSAGES, message);
-  res.send(buildSuccessRes({message: message}));
+  var data = {username: username, message: message};
+  redisClient.rpush(REDIS_MESSAGES, JSON.stringify(data), function (error, results) {
+    console.log(results);
+    res.send(buildSuccessRes(data));
+  });
 });
 
 // GET - /messages - get all messages

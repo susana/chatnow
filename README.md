@@ -1,6 +1,6 @@
 ## Setup
 
-Download and install Redis
+### Download and install Redis
 
 Download the latest stable release and save it anywhere: http://redis.io/download
 
@@ -16,23 +16,23 @@ make
 make test
 ```
 
-Run redis
+### Run redis
 
 ```
 src/redis-cli
 ```
 
-Download NodeJS
+### Download NodeJS
 
 nodejs.org/download
 
-Install dependencies
+### Install dependencies
 
 ```
 npm install
 ```
 
-Run the app
+### Run the app
 
 ```
 node app.js

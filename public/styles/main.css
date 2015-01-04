@@ -9,9 +9,27 @@
   background-color: lightgrey;
 }
 .button {
+  background-color: lightgreen;
+}
+.send {
   float: right;
   height: 20%;
   width: 20%;
-  background-color: lightgreen;
+}
+.button.small {
+  width: 130px;
 }
 
+.modal {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  background-color: white;
+}
+.username {
+  width: 180px;
+  background-color: lightgrey;
+}
+.display-none {
+  display: none;
+}
