@@ -4,6 +4,7 @@
       .bucket {
         height: 80%;
         width: 100%;
+        overflow:scroll;
       }
       .message {
         height: 20%;
@@ -23,19 +24,43 @@
   
   <body>
     <div class="bucket"><ul id="messages"></ul></div>
-    <div id="send" class="button"></div>
+    <div id="send" class="button">Send Yo Message</div>
     <div id="message" class="message" contentEditable="true"></div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script>
       var socket = io();
-      $('#send').on('click', function(){
-        socket.emit('chat message', $('#message').text());
-        $('#message').val('');
-        return false;
-      });
+      
       socket.on('chat message', function(msg){
         $('#messages').append($('<li>').text(msg));
+      });
+      
+      $.ajax({
+        type: 'GET',
+        url: 'messages',
+        success: function(data) {
+          data.data.messages.forEach(function(e, i) {
+            $('#messages').append($('<li>').text(e));
+          });
+        },
+        error: function() {
+          
+        }
+      });
+
+      $('#send').on('click', function() {
+        $.ajax({
+          type: 'POST',
+          url: 'messages',
+          data: {message: $('#message').text()},
+          success: function(data) {
+            socket.emit('chat message', data.data.message);
+            $('#message').text('');
+          },
+          error: function() {
+
+          }
+        });
       });
     </script>
   

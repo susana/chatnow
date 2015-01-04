@@ -11,6 +11,7 @@ var bodyParser = require('body-parser');
 // Server Constants
 var APP_PORT = 8001; //the port in which the application will run
 var IO_PORT = 8000; //the port in which socket io will run
+var REDIS_PORT = 6379;
 var STATIC_ROOT = path.join(__dirname, 'public');
 var VIEWS_ROOT = path.join(__dirname, 'views');
 
@@ -18,11 +19,11 @@ var VIEWS_ROOT = path.join(__dirname, 'views');
 var app = express(); // create an app using express js
 var server = http.createServer(app); // create the web server
 var io = socketio(server);
-var redisClient = redis.createClient(); //create a redis client
+var redisClient = redis.createClient(REDIS_PORT); //create a redis client
 
 // App
 var REDIS_USERS = 'users';
-var REDIS_MESSAGE = 'messages';
+var REDIS_MESSAGES = 'messages';
 var userCount = 0;
 //var users = [];
 var messages = [];
@@ -30,7 +31,7 @@ var errors = [
   {code: 'ERR_USERNAME_EXISTS', message: 'The given username is already in use.'}
 ];
 
-function buildSucessRes(data) {
+function buildSuccessRes(data) {
   return {data: data};
 }
 
@@ -59,7 +60,7 @@ app.get('/', function(req, res){
 });
 
 // POST - /users - create a new user
-app.post('users', function (req, res) {
+app.post('/users', function (req, res) {
   var username = req.body.username;
   var users = redisClient.smembers(REDIS_USERS);
 
@@ -78,24 +79,26 @@ app.get('/users', function(req, res) {
 });
 
 // DELETE - /users/username
-app.delete('users/:username', function (req, res) {
+app.delete('/users/:username', function (req, res) {
   var username = req.params.username;
   //users.splice(users.indexOf(username), 1); 
   redisClient.srem(username);
 });
 
 // POST - /messages - create a new message
-app.post('messages', function (req, res) {
-  var username = req.body.username;
+app.post('/messages', function (req, res) {
+  //var username = req.body.username;
   var message = req.body.message;
-
   redisClient.lpush(REDIS_MESSAGES, message);
-  res.send(buildSuccessRes({username: username, message: message}));
+  res.send(buildSuccessRes({message: message}));
 });
 
 // GET - /messages - get all messages
-app.get('messages', function (req, res) {
-  res.send(buildSuccessRes({messages: redisClient.lrange(REDIS_MESSAGES, 0, -1)}));
+app.get('/messages', function (req, res) {
+  redisClient.lrange(REDIS_MESSAGES, 0, -1, function(err, results) {
+    messages = results;
+    res.send(buildSuccessRes({messages: messages}));
+  });
 });
 
 server.listen(APP_PORT);
