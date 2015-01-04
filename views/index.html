@@ -1,8 +1,44 @@
 <html>
-<head></head>
+  <head>
+    <style type="text/css">
+      .bucket {
+        height: 80%;
+        width: 100%;
+      }
+      .message {
+        height: 20%;
+        width: 80%;
+        background-color: lightgrey;
+      }
+      .button {
+        float: right;
+        height: 20%;
+        width: 20%;
+        background-color: lightgreen;
+      }
+    </style>
 
-<body>
-hi
-</body>
+    <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+  </head>
+  
+  <body>
+    <div class="bucket"><ul id="messages"></ul></div>
+    <div id="send" class="button"></div>
+    <div id="message" class="message" contentEditable="true"></div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      $('#send').on('click', function(){
+        socket.emit('chat message', $('#message').text());
+        $('#message').val('');
+        return false;
+      });
+      socket.on('chat message', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
+    </script>
+  
+  </body>
 
 </html
