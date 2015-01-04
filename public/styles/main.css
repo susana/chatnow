@@ -1,0 +1,17 @@
+.bucket {
+  height: 80%;
+  width: 100%;
+  overflow:scroll;
+}
+.message {
+  height: 20%;
+  width: 80%;
+  background-color: lightgrey;
+}
+.button {
+  float: right;
+  height: 20%;
+  width: 20%;
+  background-color: lightgreen;
+}
+
