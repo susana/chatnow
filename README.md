@@ -19,7 +19,7 @@ make test
 ### Run redis
 
 ```
-src/redis-cli
+src/redis-server
 ```
 
 ### Download NodeJS
